@@ -9,3 +9,19 @@ module half_adder(
     and(carry, a, b);
 
 endmodule
+
+module full_adder(
+    output sum,
+    output cout,
+    input a,
+    input b,
+    input cin,
+);
+
+    wire s0, c0, c1;
+
+    half_adder(s0, c0, a, b);
+    half_adder(sum, c1, s0, cin);
+    or(cout, c1, c0);
+
+endmodule
