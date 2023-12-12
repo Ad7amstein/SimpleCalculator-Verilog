@@ -81,3 +81,58 @@ module SimpleCalculator(
 endmodule
 
 
+module calculator_tb();
+
+    reg clk;
+    reg reset;
+    reg signed [2:0] a, b;
+    reg [2:0] s;
+    wire g1, g2, g3, cout;
+    reg signed [2:0] g;
+
+    SimpleCalculator calc(g1, g2, g3, cout, a[0], a[1], a[2], b[0], b[1], b[2], s[0], s[1]);
+
+    initial begin
+        // Initialize signals
+        clk = 0;
+        reset = 0;
+        a = 3'b000;
+        b = 3'b000;
+        s = 3'b000;
+
+        // Apply reset
+        #10 reset = 1;
+        #10 reset = 0;
+
+        // Generate all possible combinations of inputs using for loop
+        // a and b can take values from -4 to 3, and s can take values from 0 to 3
+        // Verilog's for loop automatically increments the loop variable over time
+        for (integer i = -4; i <= 3; i = i + 1) begin
+            a = i;
+            // Assign values to inputs
+            for (integer j = -4; j <= 3; j = j + 1) begin
+                b = j;
+                for (integer k = 0; k < 4; k = k + 1) begin
+                    s = k;
+                    // Apply inputs and clock
+                    #10 clk = ~clk;
+
+                    // Evaluate g_int as an integer from g1, g2, g3
+                    g[0] = g1; g[1] = g2; g[2] = g3;
+
+                    // Display the results
+                    $display("a = %b%b%b (%d), b = %b%b%b (%d), s = %b%b (%d), g = %b%b%b (%d), cout = %b", a[2], a[1], a[0], a, b[2], b[1], b[0], b, s[1], s[0], s, g3, g2, g1, g, cout);
+
+                    // Add some delay before changing inputs
+                    #10;
+                end
+            end
+        end
+
+        // Finish simulation after all combinations are tested
+        #10 $finish;
+    end
+
+    always #5 clk = ~clk;  // Toggle clock every 5 time units
+
+endmodule
