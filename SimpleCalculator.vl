@@ -15,13 +15,69 @@ module full_adder(
     output cout,
     input a,
     input b,
-    input cin,
+    input cin
 );
 
     wire s0, c0, c1;
 
-    half_adder(s0, c0, a, b);
-    half_adder(sum, c1, s0, cin);
+    half_adder h1(s0, c0, a, b);
+    half_adder h2(sum, c1, s0, cin);
     or(cout, c1, c0);
 
 endmodule
+
+module multiplexer4X1(
+    output y,
+    input i0,
+    input i1,
+    input i2,
+    input i3,
+    input s0,
+    input s1
+);
+
+    wire w1, w2, w3, w4, w5, w6;
+
+    not(w6, s0);
+    not(w5, s1);
+    and(w1, i0, w5, w6);
+    and(w2, i1, w5, s0);
+    and(w3, i2, s1, w6);
+    and(w4, i3, s1, s0);
+    or(y, w1, w2, w3, w4);
+
+endmodule
+
+module SimpleCalculator(
+    output g1,
+    output g2,
+    output g3,
+    output cout,
+    input a0,
+    input a1,
+    input a2,
+    input b0,
+    input b1,
+    input b2,
+    input s0,
+    input s1
+);
+
+    wire w1, w2, w3, w4, w5, w6, w7, w8, w9, w10, w11;
+
+    multiplexer4X1 m1(w1, a0, a0, a0, b0, s0, s1);
+    multiplexer4X1 m2(w2, 1'b1, b0, b0, 1'b1, s0, s1);
+    multiplexer4X1 m3(w3, a1, a1, a1, b1, s0, s1);
+    multiplexer4X1 m4(w4, 1'b0, b1, b1, 1'b0, s0, s1);
+    multiplexer4X1 m5(w5, a2, a2, a2, b2, s0, s1);
+    multiplexer4X1 m6(w6, 1'b0, b2, b2, 1'b0, s0, s1);
+    xor(w7, s1, w1);
+    xor(w8, s1, w3);
+    xor(w9, s1, w5);
+    full_adder f1(g1, w10, s1, w7, w2);
+    full_adder f2(g2, w11, w10, w8, w4);
+    full_adder f3(g3, cout, w11, w9, w6);
+
+endmodule
+
+
