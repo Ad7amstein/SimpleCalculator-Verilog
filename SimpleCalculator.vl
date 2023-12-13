@@ -1,15 +1,24 @@
+/**
+ * Number of components: 12
+ * 6 => 4x1 multiplexers
+ * 3 => XOR gates
+ * 3 => full adders
+*/
+
+// Define a half adder module
 module half_adder(
     output sum,
     output carry,
     input a,
     input b
 );
-
+    // Connect sum output to XOR of inputs a and b
     xor(sum, a, b);
+    // Connect carry output to AND of inputs a and b
     and(carry, a, b);
-
 endmodule
 
+// Define a full adder module
 module full_adder(
     output sum,
     output cout,
@@ -17,15 +26,16 @@ module full_adder(
     input b,
     input cin
 );
-
+    // Declare internal wires for intermediate signals
     wire s0, c0, c1;
-
+    // Instantiate two half adders to implement a full adder
     half_adder h1(s0, c0, a, b);
     half_adder h2(sum, c1, s0, cin);
+    // Connect OR gate to calculate the final carry-out
     or(cout, c1, c0);
-
 endmodule
 
+// Define a 4-to-1 multiplexer module
 module multiplexer4X1(
     output y,
     input i0,
@@ -35,19 +45,21 @@ module multiplexer4X1(
     input s0,
     input s1
 );
-
+    // Declare internal wires for inverted select signals
     wire w1, w2, w3, w4, w5, w6;
-
+    // Invert select signals
     not(w6, s0);
     not(w5, s1);
+    // Implement AND gates for each input with inverted and non-inverted select signals
     and(w1, i0, w5, w6);
     and(w2, i1, w5, s0);
     and(w3, i2, s1, w6);
     and(w4, i3, s1, s0);
+    // Connect OR gate to calculate the final output
     or(y, w1, w2, w3, w4);
-
 endmodule
 
+// Define a simple 3-bit calculator module using full adders and multiplexers
 module SimpleCalculator(
     output g1,
     output g2,
@@ -62,36 +74,41 @@ module SimpleCalculator(
     input s0,
     input s1
 );
-
+    // Declare internal wires for multiplexer outputs and intermediate signals
     wire w1, w2, w3, w4, w5, w6, w7, w8, w9, w10, w11;
-
+    // Instantiate multiplexers for each bit
     multiplexer4X1 m1(w1, a0, a0, a0, b0, s0, s1);
     multiplexer4X1 m2(w2, 1'b1, b0, b0, 1'b1, s0, s1);
     multiplexer4X1 m3(w3, a1, a1, a1, b1, s0, s1);
     multiplexer4X1 m4(w4, 1'b0, b1, b1, 1'b0, s0, s1);
     multiplexer4X1 m5(w5, a2, a2, a2, b2, s0, s1);
     multiplexer4X1 m6(w6, 1'b0, b2, b2, 1'b0, s0, s1);
+    // XOR select signals with s1 for full adders
     xor(w7, s1, w1);
     xor(w8, s1, w3);
     xor(w9, s1, w5);
+    // Implement three full adders to calculate the three output bits
     full_adder f1(g1, w10, s1, w7, w2);
     full_adder f2(g2, w11, w10, w8, w4);
     full_adder f3(g3, cout, w11, w9, w6);
-
 endmodule
 
-
+// Testbench module
 module calculator_tb();
-
+    // Declare clock and reset signals
     reg clk;
     reg reset;
+    // Declare 3-bit signed inputs a, b, and 2-bit select signal s
     reg signed [2:0] a, b;
-    reg [2:0] s;
-    wire g1, g2, g3, cout;
+    reg [1:0] s;
+    // Declare 3-bit signed output g
     reg signed [2:0] g;
-
+    // Declare outputs from the calculator module
+    wire g1, g2, g3, cout;
+    // Instantiate the SimpleCalculator module
     SimpleCalculator calc(g1, g2, g3, cout, a[0], a[1], a[2], b[0], b[1], b[2], s[0], s[1]);
 
+    // Initial block for simulation setup
     initial begin
         // Initialize signals
         clk = 0;
@@ -104,35 +121,32 @@ module calculator_tb();
         #10 reset = 1;
         #10 reset = 0;
 
-        // Generate all possible combinations of inputs using for loop
-        // a and b can take values from -4 to 3, and s can take values from 0 to 3
-        // Verilog's for loop automatically increments the loop variable over time
+        // Nested loops to iterate through various test cases
         for (integer i = -4; i <= 3; i = i + 1) begin
             a = i;
-            // Assign values to inputs
             for (integer j = -4; j <= 3; j = j + 1) begin
                 b = j;
                 for (integer k = 0; k < 4; k = k + 1) begin
                     s = k;
-                    // Apply inputs and clock
+                    // Toggle clock
                     #10 clk = ~clk;
-
-                    // Evaluate g_int as an integer from g1, g2, g3
+                    // Assign calculated output to g
                     g[0] = g1; g[1] = g2; g[2] = g3;
 
-                    // Display the results
-                    $display("a = %b%b%b (%d), b = %b%b%b (%d), s = %b%b (%d), g = %b%b%b (%d), cout = %b", a[2], a[1], a[0], a, b[2], b[1], b[0], b, s[1], s[0], s, g3, g2, g1, g, cout);
+                    // Display input and output for each test case
+                    $display("a = %b%b%b (%d), b = %b%b%b (%d), s = %b%b (%d), g = %b%b%b (%d)",
+                    a[2], a[1], a[0], a, b[2], b[1], b[0], b, s[1], s[0], s, g3, g2, g1, g);
 
-                    // Add some delay before changing inputs
+                    // Wait for some time before the next iteration
                     #10;
                 end
             end
         end
 
-        // Finish simulation after all combinations are tested
+        // Finish simulation
         #10 $finish;
     end
 
-    always #5 clk = ~clk;  // Toggle clock every 5 time units
-
+    // Clock toggling for simulation
+    always #5 clk = ~clk;
 endmodule
