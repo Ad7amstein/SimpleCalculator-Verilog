@@ -95,9 +95,6 @@ endmodule
 
 // Testbench module
 module calculator_tb();
-    // Declare clock and reset signals
-    reg clk;
-    reg reset;
     // Declare 3-bit signed inputs a, b, and 2-bit select signal s
     reg signed [2:0] a, b;
     reg [1:0] s;
@@ -105,21 +102,16 @@ module calculator_tb();
     reg signed [2:0] g;
     // Declare outputs from the calculator module
     wire g1, g2, g3, cout;
+    integer counter = 0;
     // Instantiate the SimpleCalculator module
     SimpleCalculator calc(g1, g2, g3, cout, a[0], a[1], a[2], b[0], b[1], b[2], s[0], s[1]);
 
     // Initial block for simulation setup
     initial begin
         // Initialize signals
-        clk = 0;
-        reset = 0;
         a = 3'b000;
         b = 3'b000;
         s = 3'b000;
-
-        // Apply reset
-        #10 reset = 1;
-        #10 reset = 0;
 
         // Nested loops to iterate through various test cases
         for (integer i = -4; i <= 3; i = i + 1) begin
@@ -128,14 +120,20 @@ module calculator_tb();
                 b = j;
                 for (integer k = 0; k < 4; k = k + 1) begin
                     s = k;
-                    // Toggle clock
-                    #10 clk = ~clk;
+                    // Toggle
+                    #10
                     // Assign calculated output to g
                     g[0] = g1; g[1] = g2; g[2] = g3;
-
-                    // Display input and output for each test case
-                    $display("a = %b%b%b (%d), b = %b%b%b (%d), s = %b%b (%d), g = %b%b%b (%d)",
-                    a[2], a[1], a[0], a, b[2], b[1], b[0], b, s[1], s[0], s, g3, g2, g1, g);
+                    $write("Test Case %0d: S = %0d (%b%b), ", counter++, s, s[1], s[0]);
+                    if (s == 0) $display("G = A+1");
+                    if (s == 1) $display("G = A+B");
+                    if (s == 2) $display("G = B-A");
+                    if (s == 3) $display("G = 1-B");
+                    #10 $display("a=%0d (%b%b%b), b=%0d (%b%b%b) s=%0d (%b%b) => g=%0d (%b%b%b)\n",
+                    a, a[2], a[1], a[0],
+                    b,  b[2], b[1], b[0],
+                    s, s[1], s[0],
+                    g, g3, g2, g1);
 
                     // Wait for some time before the next iteration
                     #10;
@@ -147,6 +145,4 @@ module calculator_tb();
         #10 $finish;
     end
 
-    // Clock toggling for simulation
-    always #5 clk = ~clk;
 endmodule
